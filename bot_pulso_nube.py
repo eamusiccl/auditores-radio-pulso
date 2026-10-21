@@ -236,7 +236,7 @@ def generar_comentarios_groq(texto_escuchado, datos_muro, forzar_comentario=Fals
     """
 
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": "qwen/qwen3.8-27b",
         "messages": [
             {"role": "system", "content": "Coordinador de auditores en vivo de Radio Pulso. Responde siempre en JSON válido."},
             {"role": "user", "content": prompt_usuario}
