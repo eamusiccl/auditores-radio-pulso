@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install requests
-      - run: python bot_pulso_nube.py
+      - run: python -u bot_pulso_nube.py
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           STREAM_URL: ${{ secrets.STREAM_URL }}
