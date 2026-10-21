@@ -14,7 +14,7 @@ GROQ_API_KEY = (os.getenv("GROQ_API_KEY") or "").strip()
 STREAM_URL = (os.getenv("STREAM_URL") or "").strip()
 FIREBASE_CHAT_URL = (os.getenv("FIREBASE_CHAT_URL") or "").strip()
 
-# Asegurar que la URL de Firebase apunte siempre a /muro_pulso.json
+# Asegurar que la URL apunte exactamente a /muro_pulso.json
 if FIREBASE_CHAT_URL:
     FIREBASE_CHAT_URL = FIREBASE_CHAT_URL.rstrip("/")
     if not FIREBASE_CHAT_URL.endswith(".json"):
@@ -26,8 +26,6 @@ if FIREBASE_CHAT_URL:
 DURACION_BLOQUE_MINUTOS = 50
 INTERVALO_ESCUCHA_MIN = 180  # 3 minutos
 INTERVALO_ESCUCHA_MAX = 280  # 4.5 minutos
-
-# Probabilidad de comentar cuando suena música (70% para que el muro tenga vida constante)
 PROBABILIDAD_COMENTAR_MUSICA = 70
 
 # ==========================================
@@ -76,14 +74,13 @@ AUDITORES = [
 ultimos_auditores_locales = []
 
 def log(mensaje):
-    """Imprime en la consola de GitHub en tiempo real sin quedarse en blanco."""
     print(mensaje, flush=True)
 
 def obtener_contexto_hora_chile():
     ahora = datetime.now(ZoneInfo("America/Santiago"))
     hora = ahora.hour
     if 6 <= hora < 12:
-        momento = "por la mañana (buen día, activándose en la mañana)"
+        momento = "por la mañana (buen día, activándose)"
     elif 12 <= hora < 20:
         momento = "por la tarde (buenas tardes, acompañando el estudio o la pega)"
     else:
@@ -95,31 +92,11 @@ def leer_muro_firebase():
         r = requests.get(FIREBASE_CHAT_URL, timeout=10)
         if r.status_code == 200 and isinstance(r.json(), dict):
             return r.json()
-        else:
-            log(f"⚠️ Respuesta al leer Firebase ({r.status_code}): {r.text[:120]}")
     except Exception as e:
         log(f"⚠️ Error leyendo muro: {e}")
     return {}
 
-def dar_likes_naturales(datos_muro):
-    if not datos_muro or not FIREBASE_CHAT_URL:
-        return
-    try:
-        ultimas_llaves = list(datos_muro.keys())[-8:]
-        elegidas = random.sample(ultimas_llaves, k=min(random.randint(1, 2), len(ultimas_llaves)))
-        url_base = FIREBASE_CHAT_URL.replace(".json", "")
-
-        for llave in elegidas:
-            msg_obj = datos_muro.get(llave, {})
-            if isinstance(msg_obj, dict):
-                likes_actuales = int(msg_obj.get("likes", 0))
-                if likes_actuales < 9:
-                    requests.patch(f"{url_base}/{llave}.json", json={"likes": likes_actuales + 1}, timeout=8)
-    except Exception as e:
-        log(f"⚠️ No se pudo dar like: {e}")
-
 def capturar_audio(url_stream, archivo_salida="muestra_pulso.mp3", segundos=20):
-    """Usa FFmpeg (incluido en GitHub) para grabar un MP3 limpio de cualquier stream."""
     if os.path.exists(archivo_salida):
         os.remove(archivo_salida)
     try:
@@ -136,10 +113,9 @@ def capturar_audio(url_stream, archivo_salida="muestra_pulso.mp3", segundos=20):
         subprocess.run(comando, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=35)
         if os.path.exists(archivo_salida) and os.path.getsize(archivo_salida) > 5000:
             return True
-    except Exception as e:
-        log(f"⚠️ Aviso FFmpeg: {e}")
+    except Exception:
+        pass
 
-    # Respaldo directo con Python si FFmpeg falla
     try:
         inicio = time.time()
         headers = {"User-Agent": "Mozilla/5.0"}
@@ -165,8 +141,6 @@ def transcribir_con_groq(archivo_audio):
             r = requests.post(url, headers=headers, files=archivos, data=datos, timeout=30)
             if r.status_code == 200:
                 return r.json().get("text", "").strip()
-            else:
-                log(f"⚠️ Error Whisper ({r.status_code}): {r.text[:150]}")
     except Exception as e:
         log(f"⚠️ Error al transcribir: {e}")
     return ""
@@ -192,10 +166,9 @@ def generar_comentarios_groq(texto_escuchado, datos_muro, forzar_comentario=Fals
     hora_chile = obtener_contexto_hora_chile()
     palabras = len(texto_escuchado.split())
 
-    # Decidir si comentamos en este ciclo
     if not forzar_comentario and palabras < 12:
         if random.randint(1, 100) > PROBABILIDAD_COMENTAR_MUSICA:
-            log("🎵 Sonando música. En este turno los auditores solo escuchan.")
+            log("🎵 Sonando música. Los auditores escuchan en silencio.")
             return []
 
     cantidad = 1 if palabras < 15 else random.choices([1, 2], weights=[65, 35])[0]
@@ -206,31 +179,27 @@ def generar_comentarios_groq(texto_escuchado, datos_muro, forzar_comentario=Fals
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
 
     contexto_audio = (
-        f'En la radio se acaba de escuchar esto: "{texto_escuchado}"'
+        f'En la radio se escuchó: "{texto_escuchado}"'
         if palabras >= 5 else
-        "En este momento está sonando música cristiana juvenil en vivo en Radio Pulso."
+        "Está sonando música cristiana juvenil en vivo en Radio Pulso."
     )
 
     prompt_usuario = f"""
     Hora actual en Chile: {hora_chile}.
     {contexto_audio}
 
-    Genera mensajes para el muro en vivo de Radio Pulso simulando ser estos auditores reales:
+    Genera mensajes para el muro de Radio Pulso simulando ser estos auditores reales (respeta estrictamente la longitud máxima de 300 caracteres por mensaje):
     {perfiles_txt}
 
-    REGLAS DE REALISMO EXTREMO:
-    1. Si en el texto hay un locutor hablando un tema, comenten específicamente sobre lo que dijo.
-    2. Si es la letra de una canción o está sonando música, manden un saludo juvenil comentando qué buena está la música, pidiendo un tema o dejando una reflexión corta de fe.
-    3. Usa un tono juvenil chileno auténtico (puedes abreviar 'q', 'pa q', usar 'bacán', 'wena', 'cabros' según el estilo del auditor). Entre 8 y 22 palabras.
-    4. Elige para cada mensaje una categoría coherente entre estas tres opciones exactas:
-       - " ⚡ Saludo" (la más común, 75% de las veces)
-       - " 🔥 Pido Tema" (si pide una canción)
-       - " 🙏 Oración" (si pide oración o agradece a Dios)
+    REGLAS:
+    1. Si hay un locutor hablando, comenta sobre eso. Si hay música, manda un saludo o pide un tema.
+    2. Tono juvenil chileno ('q', 'pa q', 'bacán', 'wena'). Longitud entre 8 y 25 palabras (muy por debajo del límite).
+    3. Categoría exacta: " ⚡ Saludo", " 🔥 Pido Tema" o " 🙏 Oración".
 
     Responde SOLO en JSON con este formato exacto:
     {{
       "comentarios": [
-        {{"name": "Nombre_Exacto_Del_Auditor", "category": " ⚡ Saludo", "message": "mensaje aquí"}}
+        {{"name": "Nombre", "category": " ⚡ Saludo", "message": "texto aquí"}}
       ]
     }}
     """
@@ -251,24 +220,28 @@ def generar_comentarios_groq(texto_escuchado, datos_muro, forzar_comentario=Fals
             contenido = r.json()["choices"][0]["message"]["content"]
             return json.loads(contenido).get("comentarios", [])
         else:
-            log(f"⚠️ Error Llama Groq ({r.status_code}): {r.text[:150]}")
+            log(f"⚠️ Error IA ({r.status_code}): {r.text[:150]}")
     except Exception as e:
         log(f"⚠️ Error en IA: {e}")
     return []
 
 def publicar_en_muro_pulso(nombre, mensaje, ciudad, categoria=" ⚡ Saludo"):
+    # Cumple exactamente con las validaciones de tus reglas:
+    # hasChildren(['name', 'message', 'category', 'createdAt', 'likes', 'pinned'])
+    # pinned: false, likes: 0, longitudes de texto válidas.
     datos_mensaje = {
         "category": categoria,
         "city": ciudad,
         "createdAt": int(time.time() * 1000),
-        "likes": random.choices([0, 1, 2], weights=[60, 30, 10])[0],
+        "likes": 0,
         "message": mensaje,
-        "name": nombre
+        "name": nombre,
+        "pinned": False
     }
     try:
         r = requests.post(FIREBASE_CHAT_URL, json=datos_mensaje, timeout=10)
         if r.status_code in [200, 201]:
-            log(f"✅ PUBLICADO EN MURO -> [{nombre} • {ciudad} | {categoria}]: {mensaje}")
+            log(f"✅ PUBLICADO -> [{nombre} • {ciudad} | {categoria}]: {mensaje}")
         else:
             log(f"❌ Error Firebase ({r.status_code}): {r.text}")
     except Exception as e:
@@ -289,15 +262,11 @@ if __name__ == "__main__":
             log(f"📝 Transcripción: '{texto_radio}'")
         else:
             texto_radio = ""
-            log("⚠️ No se pudo leer audio del stream, usando contexto musical en vivo.")
+            log("⚠️ Usando contexto musical en vivo.")
 
         datos_muro = leer_muro_firebase()
-        # En el primer turno forzamos 1 comentario inmediato para verificar que todo funciona
         comentarios = generar_comentarios_groq(texto_radio, datos_muro, forzar_comentario=primer_turno)
         primer_turno = False
-
-        if comentarios:
-            dar_likes_naturales(datos_muro)
 
         for i, item in enumerate(comentarios):
             nombre_auditor = item.get("name", "Nico")
