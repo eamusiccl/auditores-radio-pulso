@@ -14,7 +14,6 @@ GROQ_API_KEY = (os.getenv("GROQ_API_KEY") or "").strip()
 STREAM_URL = (os.getenv("STREAM_URL") or "").strip()
 FIREBASE_CHAT_URL = (os.getenv("FIREBASE_CHAT_URL") or "").strip()
 
-# Asegurar que la URL apunte exactamente a /muro_pulso.json
 if FIREBASE_CHAT_URL:
     FIREBASE_CHAT_URL = FIREBASE_CHAT_URL.rstrip("/")
     if not FIREBASE_CHAT_URL.endswith(".json"):
@@ -29,7 +28,7 @@ INTERVALO_ESCUCHA_MAX = 280  # 4.5 minutos
 PROBABILIDAD_COMENTAR_MUSICA = 20
 
 # ==========================================
-# 2. 45 AUDITORES CON ESTILO JUVENIL REAL
+# 2. AUDITORES DISTRIBUIDOS POR TODO CHILE
 # ==========================================
 ESTILOS_ESCRITURA = [
     "Escribe todo en minúsculas, abreviando como en WhatsApp ('q', 'pa q', 'xq', 'tkm'), sin punto final y muy natural.",
@@ -38,37 +37,37 @@ ESTILOS_ESCRITURA = [
     "Espontáneo, cuenta qué está haciendo (estudiando, en la pega, viajando) mientras escucha Radio Pulso.",
     "Directo y cercano ('tremendo temazo', 'se pasaron con la música hoy', 'bendiciones a toda la comunidad de pulso').",
     "Alegre y expresiva, usa algún emoji como ❤️‍🔥, ✨, 🎵 o 🙌 y anima a otros a compartir la radio.",
-    "Pide un tema musical cristiano juvenil (como Redimi2, Barak, Un Corazón, Alex Zurdo, Averly Morillo o Funky) o saluda.",
+    "Pide un tema musical cristiano juvenil (como Redimi2, Barak, Un Corazón, Alex Zurdo) o saluda.",
     "Cálido y edificante, agradece a Dios por la radio o deja un motivo breve de oración por su semana.",
     "Estilo rápido de celular: frases de 8 a 16 palabras, sin mayúsculas al inicio, muy auténtico.",
     "Comenta la energía de la radio y manda saludos desde su ciudad a todos los que están conectados."
 ]
 
-BASE_OYENTES = [
-    ("Nico", "Coquimbo"), ("Javi Morales", "La Serena"), ("Matías R.", "Ovalle"),
-    ("Cami", "La Serena"), ("Diego Araya", "Coquimbo"), ("Vale Ignacia", "Viña del Mar"),
-    ("Seba", "Santiago"), ("Fran", "Coquimbo"), ("Coni Rojas", "La Serena"),
-    ("Bastián", "Chillán"), ("Pame", "Coquimbo"), ("Lucas V.", "Antofagasta"),
-    ("Cata", "La Serena"), ("Tomás", "Los Ángeles"), ("Nacho", "Coquimbo"),
-    ("Maca", "Santiago"), ("Pipe", "La Serena"), ("Anto Díaz", "Coquimbo"),
-    ("Gabo", "Concepción"), ("Dani", "La Serena"), ("Cris Olivares", "Coquimbo"),
-    ("Fernanda", "Viña del Mar"), ("Pancho", "Ovalle"), ("Martina", "La Serena"),
-    ("Leo Cortés", "Coquimbo"), ("Sofi", "Santiago"), ("Benja", "Río Hurtado"),
-    ("Caro Muñoz", "La Serena"), ("Maxi", "Copiapó"), ("Romi", "Coquimbo"),
-    ("Joaquín", "La Serena"), ("Belén", "Ovalle"), ("Claudio P.", "Coquimbo"),
-    ("Josefa", "Temuco"), ("Álvaro", "La Serena"), ("Trini", "Santiago"),
-    ("Gonzalo", "Coquimbo"), ("Pau", "La Serena"), ("Vicente", "Coquimbo"),
-    ("Maite", "Valparaíso"), ("Rodrigo", "La Serena"), ("Isi", "Coquimbo"),
-    ("Fabián", "Ovalle"), ("Ale", "La Serena"), ("Cristóbal", "Coquimbo")
-]
-
+# Auditores ordenados por regiones de Chile para forzar variedad total
 AUDITORES = [
-    {
-        "nombre": nombre,
-        "ciudad": ciudad,
-        "estilo": ESTILOS_ESCRITURA[i % len(ESTILOS_ESCRITURA)]
-    }
-    for i, (nombre, ciudad) in enumerate(BASE_OYENTES)
+    {"nombre": "Lucas V.", "ciudad": "Antofagasta", "estilo": ESTILOS_ESCRITURA[0]},
+    {"nombre": "Maxi", "ciudad": "Copiapó", "estilo": ESTILOS_ESCRITURA[1]},
+    {"nombre": "Tomás", "ciudad": "Ovalle", "estilo": ESTILOS_ESCRITURA[2]},
+    {"nombre": "Fabián", "ciudad": "Ovalle", "estilo": ESTILOS_ESCRITURA[3]},
+    {"nombre": "Pancho", "ciudad": "Illapel", "estilo": ESTILOS_ESCRITURA[4]},
+    {"nombre": "Seba", "ciudad": "Santiago", "estilo": ESTILOS_ESCRITURA[5]},
+    {"nombre": "Maca", "ciudad": "Santiago", "estilo": ESTILOS_ESCRITURA[6]},
+    {"nombre": "Trini", "ciudad": "Santiago", "estilo": ESTILOS_ESCRITURA[7]},
+    {"nombre": "Vale Ignacia", "ciudad": "Viña del Mar", "estilo": ESTILOS_ESCRITURA[8]},
+    {"nombre": "Fernanda", "ciudad": "Viña del Mar", "estilo": ESTILOS_ESCRITURA[9]},
+    {"nombre": "Maite", "ciudad": "Valparaíso", "estilo": ESTILOS_ESCRITURA[0]},
+    {"nombre": "Josefa", "ciudad": "Temuco", "estilo": ESTILOS_ESCRITURA[1]},
+    {"nombre": "Gabo", "ciudad": "Concepción", "estilo": ESTILOS_ESCRITURA[2]},
+    {"nombre": "Bastián", "ciudad": "Chillán", "estilo": ESTILOS_ESCRITURA[3]},
+    {"nombre": "Benja", "ciudad": "Río Hurtado", "estilo": ESTILOS_ESCRITURA[4]},
+    {"nombre": "Coni Rojas", "ciudad": "Quilpué", "estilo": ESTILOS_ESCRITURA[5]},
+    {"nombre": "Joaquín", "ciudad": "Rancagua", "estilo": ESTILOS_ESCRITURA[6]},
+    {"nombre": "Alonso", "ciudad": "Curicó", "estilo": ESTILOS_ESCRITURA[7]},
+    {"nombre": "Ignacia", "ciudad": "Talca", "estilo": ESTILOS_ESCRITURA[8]},
+    {"nombre": "Vicente", "ciudad": "Los Ángeles", "estilo": ESTILOS_ESCRITURA[9]},
+    {"nombre": "Anto Díaz", "ciudad": "Puerto Montt", "estilo": ESTILOS_ESCRITURA[0]},
+    {"nombre": "Martina", "ciudad": "Valdivia", "estilo": ESTILOS_ESCRITURA[1]},
+    {"nombre": "Sofi", "ciudad": "Punta Arenas", "estilo": ESTILOS_ESCRITURA[2]}
 ]
 
 ultimos_auditores_locales = []
@@ -151,10 +150,12 @@ def elegir_auditores_turno(datos_muro, cantidad=1):
     recientes_muro = [
         datos_muro[k].get("name", "") for k in ultimas_llaves if isinstance(datos_muro.get(k), dict)
     ]
+    
+    # Evitar repetir a los últimos 15 del muro o recientes
     bloqueados = set(ultimos_auditores_locales[-15:] + recientes_muro)
-
     disponibles = [a for a in AUDITORES if a["nombre"] not in bloqueados]
-    if len(disponibles) < 5:
+    
+    if len(disponibles) < 3:
         disponibles = AUDITORES
 
     seleccionados = random.sample(disponibles, k=min(cantidad, len(disponibles)))
@@ -171,7 +172,7 @@ def generar_comentarios_groq(texto_escuchado, datos_muro, forzar_comentario=Fals
             log("🎵 Sonando música. Los auditores escuchan en silencio.")
             return []
 
-    cantidad = 1 if palabras < 15 else random.choices([1, 2], weights=[65, 35])[0]
+    cantidad = 1 if palabras < 15 else random.choices([1, 2], weights=[70, 30])[0]
     auditores_turno = elegir_auditores_turno(datos_muro, cantidad=cantidad)
     perfiles_txt = "\n".join([f"- {a['nombre']} (de {a['ciudad']}): {a['estilo']}" for a in auditores_turno])
 
@@ -188,12 +189,12 @@ def generar_comentarios_groq(texto_escuchado, datos_muro, forzar_comentario=Fals
     Hora actual en Chile: {hora_chile}.
     {contexto_audio}
 
-    Genera mensajes para el muro de Radio Pulso simulando ser estos auditores reales (respeta estrictamente la longitud máxima de 300 caracteres por mensaje):
+    Genera mensajes para el muro de Radio Pulso simulando ser estos auditores. CADA UNO DEBE SALUDAR MENCIONANDO OBLIGATORIAMENTE SU CIUDAD DE ORIGEN (que está entre paréntesis):
     {perfiles_txt}
 
     REGLAS:
-    1. Si hay un locutor hablando, comenta sobre eso. Si hay música, manda un saludo o pide un tema.
-    2. Tono juvenil chileno ('q', 'pa q', 'bacán', 'wena'). Longitud entre 8 y 25 palabras (muy por debajo del límite).
+    1. Si hay un locutor hablando, comenta sobre eso. Si hay música, manda un saludo desde su ciudad o pide un tema.
+    2. Tono juvenil chileno ('q', 'pa q', 'bacán', 'wena'). Longitud entre 8 y 25 palabras.
     3. Categoría exacta: " ⚡ Saludo", " 🔥 Pido Tema" o " 🙏 Oración".
 
     Responde SOLO en JSON con este formato exacto:
@@ -226,9 +227,6 @@ def generar_comentarios_groq(texto_escuchado, datos_muro, forzar_comentario=Fals
     return []
 
 def publicar_en_muro_pulso(nombre, mensaje, ciudad, categoria=" ⚡ Saludo"):
-    # Cumple exactamente con las validaciones de tus reglas:
-    # hasChildren(['name', 'message', 'category', 'createdAt', 'likes', 'pinned'])
-    # pinned: false, likes: 0, longitudes de texto válidas.
     datos_mensaje = {
         "category": categoria,
         "city": ciudad,
@@ -248,8 +246,7 @@ def publicar_en_muro_pulso(nombre, mensaje, ciudad, categoria=" ⚡ Saludo"):
         log(f"❌ Error de red al publicar: {e}")
 
 if __name__ == "__main__":
-    log("🚀 Iniciando Auditores IA de Radio Pulso...")
-    log(f"🔗 Destino Firebase: {FIREBASE_CHAT_URL}")
+    log("🚀 Iniciando Auditores IA de Radio Pulso (Variedad Nacional)...")
     inicio_bloque = time.time()
     archivo_temp = "muestra_pulso.mp3"
     mapa_ciudades = {a["nombre"]: a["ciudad"] for a in AUDITORES}
@@ -269,10 +266,11 @@ if __name__ == "__main__":
         primer_turno = False
 
         for i, item in enumerate(comentarios):
-            nombre_auditor = item.get("name", "Nico")
+            nombre_auditor = item.get("name", "Lucas V.")
             texto_comentario = item.get("message", "")
             categoria = item.get("category", " ⚡ Saludo")
-            ciudad_auditor = mapa_ciudades.get(nombre_auditor, "Coquimbo")
+            # Forzar que la ciudad coincida con el mapa nacional
+            ciudad_auditor = mapa_ciudades.get(nombre_auditor, "Santiago")
 
             if texto_comentario:
                 publicar_en_muro_pulso(nombre_auditor, texto_comentario, ciudad_auditor, categoria)
